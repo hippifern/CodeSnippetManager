@@ -1,6 +1,31 @@
 import logo from "../assets/logo.svg";
+import { Link, useNavigate } from "react-router";
+import { auth } from "../firebase.tsx";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState } from "react";
 
 export const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleLoginSubmit(e) {
+    e.preventDefault();
+
+    try {
+      setError("");
+      setLoading(true);
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Failed to log in: " + err.message);
+    }
+
+    setLoading(false);
+  }
+
   return (
     <div className="bg-emerald-300 h-screen w-screen flex justify-center items-center">
       <div className="bg-white h-fit flex flex-col justify-center px-6 py-6 lg:px-8 rounded-2xl ">
@@ -13,7 +38,12 @@ export const Login = () => {
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form action="#" method="POST" className="space-y-6">
+          <form
+            action="#"
+            method="POST"
+            className="space-y-6"
+            onSubmit={handleLoginSubmit}
+          >
             <div>
               <label
                 htmlFor="email"
@@ -26,6 +56,8 @@ export const Login = () => {
                   id="email"
                   type="email"
                   name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
                   className="block w-full rounded-md bg-black/5 px-3 py-1.5 text-base text-black outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
@@ -56,6 +88,8 @@ export const Login = () => {
                   type="password"
                   name="password"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   className="block w-full rounded-md bg-black/5 px-3 py-1.5 text-base text-black outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                 />
@@ -65,6 +99,7 @@ export const Login = () => {
             <div>
               <button
                 type="submit"
+                disabled={loading}
                 className="flex w-full justify-center rounded-md bg-emerald-300 px-3 py-1.5 text-sm/6 font-semibold text-black hover:bg-emerald-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
                 Sign in
