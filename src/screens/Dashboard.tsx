@@ -39,6 +39,9 @@ export const Dashboard = () => {
       <div className="inner-container bg-white h-full w-full rounded-2xl shadow-emerald-400 shadow-md flex p-8 flex-col">
         <div className="upper-buttons border-b-2 border-gray-200 w-full h-12 flex justify-between ">
           <Navbar />
+          <div className="rounded-2xl bg-emerald-300 h-fit px-8">
+            <p className="text-white">email@email.com</p>
+          </div>
           <Logout />
         </div>
         <div className="main-content w-full h-full flex py-8 ">
@@ -69,10 +72,40 @@ export const Dashboard = () => {
           </div>
           <div className="main-content-right flex-5 w-full h-full flex px-4">
             <CodeBlock />
-            <div className="info-container flex-1 mx-2 rounded-2xl flex flex-col">
-              <ContentBlock />
-              <ContentBlock />
-              <ContentBlock />
+            <div className="info-container flex-1 mx-2 flex flex-col h-full gap-6 justify-start border-l-2 border-gray-200 px-4">
+              <ContentBlock>
+                <div className="flex justify-between items-center">
+                  <h1 className="text-2xl">The title of the snippet active</h1>
+                  <p>Language Tag</p>
+                </div>
+                <div>
+                  <div>
+                    <p>date created: 123911</p>
+                    <p>last updated: 129319</p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-6">
+                  <p>tag 1</p>
+                  <p>tag 2</p>
+                  <p>tag 3</p>
+                </div>
+              </ContentBlock>
+              <ContentBlock flex={"flex-2"}>
+                <div className="flex">
+                  <h1>Snippet Notes:</h1>
+                </div>
+                <textarea
+                  id="message"
+                  rows={10}
+                  className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
+                  placeholder="Write your thoughts here..."
+                ></textarea>
+              </ContentBlock>
+              <div className="flex justify-around flex-2 items-end">
+                <Button text="Delete" />
+                <Button text="Edit" />
+                <Button text="Save" />
+              </div>
             </div>
           </div>
         </div>
