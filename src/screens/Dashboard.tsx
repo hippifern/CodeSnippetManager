@@ -1,5 +1,3 @@
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../firebase.tsx";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { Button } from "../components/Button.tsx";
@@ -9,19 +7,34 @@ import { Item } from "../components/Item.tsx";
 import { CodeBlock } from "../components/CodeBlock.tsx";
 import { ContentBlock } from "../components/ContentBlock.tsx";
 import { snippets, optimisations } from "../data/fakeData.ts";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { ref, onValue, update } from "firebase/database";
+import { auth, database } from "../firebase.tsx";
+
+type optimisationType = {
+  id: number;
+  snippet_id: number;
+  improved_code: string;
+  explanation: string;
+  created_at: Date;
+};
+type snippetType = {
+  id: number;
+  user_id: string;
+  title: string;
+  language: string;
+  code: string;
+  tags: string[];
+  notes: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
 export const Dashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedSnippet, setSelectedSnippet] = useState<{
-    id: number;
-    user_id: number;
-    title: string;
-    language: string;
-    code: string;
-    tags: string[];
-    notes: string;
-    created_at: Date;
-    updated_at: Date;
-  } | null>(null);
+  const [selectedSnippet, setSelectedSnippet] = useState<snippetType | null>(
+    null,
+  );
   const [selectedOptimisation, setSelectedOptimisation] = useState<{
     id: number;
     snippet_id: number;
@@ -29,17 +42,93 @@ export const Dashboard = () => {
     explanation: string;
     created_at: Date;
   } | null>(null);
+  const [data, setData] = useState<{
+    optimsations: optimisationType[];
+    snippets: snippetType[];
+  }>(null);
   const navigate = useNavigate();
+  const collectionRef = ref(database, "data");
+
+  const fetchData = (ref) => {
+    let prevData = [];
+    onValue(ref, (snapshot) => {
+      const dataItem = snapshot.val();
+      if (dataItem) {
+        prevData = dataItem;
+        setData(dataItem);
+        setSelectedSnippet(dataItem.snippets[0]);
+      }
+    });
+    return prevData;
+  };
+
+  const setUpData = (uid) => {
+    let data = {};
+    const setupSnipId = Math.round(Math.random() * 1000000);
+    data[uid] = {
+      snippets: [
+        {
+          id: setupSnipId,
+          user_id: uid,
+          title: "New Code Snippet",
+          language: "Not Set",
+          code: `Code not added yet`,
+          tags: [],
+          notes: "Notes not added yet",
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ],
+      optimisations: [
+        {
+          id: Math.round(Math.random() * 1000000),
+          snippet_id: setupSnipId,
+          improved_code: "No optimised code added yet",
+          explanation: "No optimisation made yet",
+          created_at: new Date(),
+        },
+      ],
+    };
+    update(collectionRef, data);
+  };
+
+  const addNewSnippet = (uid) => {
+    const snippetsRef = ref(database, `data`);
+    const prevData = fetchData(snippetsRef);
+    const newData = [
+      ...prevData[0],
+      {
+        id: Math.random() * 100000,
+        user_id: uid,
+        title: "New Code Snippet",
+        language: "Not Set",
+        code: `Code not added yet`,
+        tags: ["new byte"],
+        notes: "Notes not added yet",
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    ];
+
+    update(snippetsRef, {
+      id: uid,
+      snippets: newData,
+    });
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
+        const userDataRef = ref(database, `data/${user.uid}`);
+        const d = fetchData(userDataRef);
+        if (d.length === 0) {
+          setUpData(user.uid);
+        }
       } else {
         navigate("/dashboard");
       }
     });
-    selectSnippet(1001);
     return () => unsubscribe();
   }, [navigate]);
 
@@ -53,44 +142,57 @@ export const Dashboard = () => {
   }
 
   function selectSnippet(id) {
-    snippets.forEach((snip) => {
-      if (snip.id === id) {
-        setSelectedSnippet(snip);
-      }
-    });
-    optimisations.forEach((opti) => {
-      if (opti.snippet_id === id) {
-        setSelectedOptimisation(opti);
-      }
-    });
+    if (data !== null) {
+      data.snippets.forEach((snip) => {
+        if (snip.id === id) {
+          setSelectedSnippet(snip);
+        }
+      });
+      data.optimsations.forEach((opti) => {
+        if (opti.snippet_id === id) {
+          setSelectedOptimisation(opti);
+        }
+      });
+    }
   }
 
-  console.log(selectedSnippet);
-
-  // if (!currentUser) return <div>Loading...</div>;
+  if (!currentUser && !data)
+    return (
+      <div className="outer-container bg-emerald-300 h-screen w-screen p-6">
+        <div className="inner-container h-full w-full rounded-2xl flex p-8 justify-center items-center">
+          <h1 className="text-4xl text-white">Loading...</h1>
+        </div>
+      </div>
+    );
 
   return (
-    <div className="outer-container bg-emerald-300 h-screen w-screen p-8">
+    <div className="outer-container bg-emerald-300 h-screen w-screen p-6">
       <div className="inner-container bg-white h-full w-full rounded-2xl shadow-emerald-400 shadow-md flex p-8 flex-col">
         <div className="upper-buttons border-b-2 border-gray-200 w-full h-10 flex justify-between ">
-          <Navbar />
+          {currentUser ? <Navbar currentUser={currentUser} /> : <></>}
           <Logout handleLogout={handleLogout} />
         </div>
         <div className="main-content w-full h-full flex py-8 ">
           <div className="main-content-left flex-1 border-r-2 border-gray-200 px-4">
-            <Button text="Add New Byte" />
+            <Button
+              text="Add New Byte"
+              onClick={() => {
+                addNewSnippet(currentUser.uid);
+              }}
+            />
             <div className="items py-2 flex flex-col gap-2">
-              {selectedSnippet !== null ? (
-                snippets.map((snip) => {
+              {data !== null ? (
+                data.snippets.map((snip) => {
                   return (
                     <Item
                       title={snip.title}
-                      dateAdded={snip.created_at}
+                      dateAdded={new Date(snip.created_at)}
                       selectSnippet={() => {
                         selectSnippet(snip.id);
                       }}
                       selectedSnippetId={selectedSnippet.id}
                       id={snip.id}
+                      language={snip.language}
                     />
                   );
                 })
@@ -131,29 +233,32 @@ export const Dashboard = () => {
                     <div className="mb-6">
                       <div>
                         <p className="text-gray-500">
-                          date created: {selectedSnippet.created_at.getDay()}
+                          date created:{" "}
+                          {new Date(selectedSnippet.created_at).getDay()}
                           {"-"}
-                          {selectedSnippet.created_at.getMonth()}
+                          {new Date(selectedSnippet.created_at).getMonth()}
                           {"-"}
-                          {selectedSnippet.created_at.getFullYear()}
+                          {new Date(selectedSnippet.created_at).getFullYear()}
                         </p>
                         <p className="text-gray-500">
-                          last updated: {selectedSnippet.updated_at.getDay()}
+                          last updated:{" "}
+                          {new Date(selectedSnippet.updated_at).getDay()}
                           {"-"}
-                          {selectedSnippet.updated_at.getMonth()}
+                          {new Date(selectedSnippet.updated_at).getMonth()}
                           {"-"}
-                          {selectedSnippet.updated_at.getFullYear()}
+                          {new Date(selectedSnippet.updated_at).getFullYear()}
                         </p>
                       </div>
                     </div>
                     <div className="flex justify-end gap-3">
-                      {selectedSnippet.tags.map((tag) => {
-                        return (
-                          <p className="text-sm px-3 rounded-2xl bg-emerald-100">
-                            {tag}
-                          </p>
-                        );
-                      })}
+                      {selectedSnippet.tags &&
+                        selectedSnippet.tags.map((tag) => {
+                          return (
+                            <p className="text-sm px-3 rounded-2xl bg-emerald-100">
+                              {tag}
+                            </p>
+                          );
+                        })}
                     </div>
                   </div>
                 )}
@@ -184,6 +289,16 @@ export const Dashboard = () => {
                         : ""
                     }
                   ></textarea>
+                </div>
+              </ContentBlock>
+              <ContentBlock flex={"flex-3 flex-col gap-6"}>
+                <div className="flex justify-between">
+                  <h2>Add Tag:</h2>
+                  <input type="text" name="" id="" />
+                </div>
+                <div className="flex justify-between">
+                  <h2>Change Language:</h2>
+                  <input type="text" name="" id="" />
                 </div>
               </ContentBlock>
               {/* BUTTON BLOCK */}

@@ -15,7 +15,7 @@ export const snippets = [
     id: 1002,
     user_id: 1,
     title: "React Functional Component",
-    language: "Bash",
+    language: "Javascript",
     code: `export const ComponentName = () => {
   return (
     <>

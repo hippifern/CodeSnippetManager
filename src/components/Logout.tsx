@@ -2,7 +2,10 @@ export const Logout = ({ handleLogout }: { handleLogout: () => void }) => {
   return (
     <nav aria-label="breadcrumb">
       <ul className="flex flex-wrap space-x-3 text-sm font-medium">
-        <li onClick={handleLogout} className="flex items-center space-x-3">
+        <li
+          onClick={handleLogout}
+          className="flex items-center space-x-3 cursor-pointer"
+        >
           <a href="#" className="flex items-center space-x-1 text-gray-800">
             <svg
               className="h-4 w-4 shrink-0 fill-gray-500"
