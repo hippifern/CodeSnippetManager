@@ -11,6 +11,24 @@ export const snippets = [
     created_at: new Date(),
     updated_at: new Date(),
   },
+  {
+    id: 1002,
+    user_id: 1,
+    title: "React Functional Component",
+    language: "Bash",
+    code: `export const ComponentName = () => {
+  return (
+    <>
+      
+    </>
+  );
+}`,
+    tags: ["React", "Functional", "Component"],
+    notes:
+      "My regularly used snippet for setting up a functional react component.",
+    created_at: new Date(),
+    updated_at: new Date(),
+  },
 ];
 
 export const optimisations = [

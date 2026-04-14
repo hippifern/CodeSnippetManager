@@ -32,6 +32,7 @@ export const Dashboard = () => {
         navigate("/dashboard");
       }
     });
+    selectSnippet(1001);
     return () => unsubscribe();
   }, [navigate]);
 
@@ -67,26 +68,30 @@ export const Dashboard = () => {
           <div className="main-content-left flex-1 border-r-2 border-gray-200 px-4">
             <Button text="Add New Byte" />
             <div className="items py-2 flex flex-col gap-2">
-              {snippets.map((snip) => {
-                return (
-                  <Item
-                    title={snip.title}
-                    dateAdded={snip.created_at}
-                    selectSnippet={() => {
-                      selectSnippet(snip.id);
-                    }}
-                    selectedSnippetId={selectedSnippet.id}
-                    id={snip.id}
-                  />
-                );
-              })}
+              {selectedSnippet !== null ? (
+                snippets.map((snip) => {
+                  return (
+                    <Item
+                      title={snip.title}
+                      dateAdded={snip.created_at}
+                      selectSnippet={() => {
+                        selectSnippet(snip.id);
+                      }}
+                      selectedSnippetId={selectedSnippet.id}
+                      id={snip.id}
+                    />
+                  );
+                })
+              ) : (
+                <></>
+              )}
             </div>
           </div>
           <div className="main-content-right flex-5 w-full h-full flex px-4">
             <div className="flex flex-col w-full h-full items-start gap-3 flex-3">
-              <h1>Original Code:</h1>
+              <h1 className="text-xl">Original Code:</h1>
               <CodeBlock />
-              <h1>Optimised Code:</h1>
+              <h1 className="text-xl">Optimised Code:</h1>
               <CodeBlock />
               <Button text="Optimise Code" />
             </div>
@@ -96,23 +101,23 @@ export const Dashboard = () => {
                 {selectedSnippet === null ? (
                   <h1>No snippet selected</h1>
                 ) : (
-                  <>
+                  <div className="flex flex-col">
                     <div className="flex justify-between items-center">
                       <h1 className="text-3xl">{selectedSnippet.title}</h1>
                       <p className="px-3 rounded-2xl bg-emerald-300">
                         {selectedSnippet.language}
                       </p>
                     </div>
-                    <div>
+                    <div className="mb-6">
                       <div>
-                        <p>
+                        <p className="text-gray-500">
                           date created: {selectedSnippet.created_at.getDay()}
                           {"-"}
                           {selectedSnippet.created_at.getMonth()}
                           {"-"}
                           {selectedSnippet.created_at.getFullYear()}
                         </p>
-                        <p>
+                        <p className="text-gray-500">
                           last updated: {selectedSnippet.updated_at.getDay()}
                           {"-"}
                           {selectedSnippet.updated_at.getMonth()}
@@ -130,7 +135,7 @@ export const Dashboard = () => {
                         );
                       })}
                     </div>
-                  </>
+                  </div>
                 )}
               </ContentBlock>
               {/* NOTE BLOCK */}
@@ -141,6 +146,7 @@ export const Dashboard = () => {
                   rows={5}
                   className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
                   placeholder="Write your thoughts here..."
+                  value={selectedSnippet !== null ? selectedSnippet.notes : ""}
                 ></textarea>
               </ContentBlock>
               {/* OPTIMISATION BLOCK */}
@@ -157,7 +163,10 @@ export const Dashboard = () => {
               </ContentBlock>
               {/* BUTTON BLOCK */}
               <div className="flex justify-around items-end h-fit">
-                <Button text="Delete" />
+                <Button
+                  text="Delete"
+                  color="text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-black"
+                />
                 <Button text="Edit" />
                 <Button text="Save" />
               </div>
