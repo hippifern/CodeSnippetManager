@@ -22,6 +22,13 @@ export const Dashboard = () => {
     created_at: Date;
     updated_at: Date;
   } | null>(null);
+  const [selectedOptimisation, setSelectedOptimisation] = useState<{
+    id: number;
+    snippet_id: number;
+    improved_code: string;
+    explanation: string;
+    created_at: Date;
+  } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +58,11 @@ export const Dashboard = () => {
         setSelectedSnippet(snip);
       }
     });
+    optimisations.forEach((opti) => {
+      if (opti.snippet_id === id) {
+        setSelectedOptimisation(opti);
+      }
+    });
   }
 
   console.log(selectedSnippet);
@@ -62,7 +74,7 @@ export const Dashboard = () => {
       <div className="inner-container bg-white h-full w-full rounded-2xl shadow-emerald-400 shadow-md flex p-8 flex-col">
         <div className="upper-buttons border-b-2 border-gray-200 w-full h-10 flex justify-between ">
           <Navbar />
-          <Logout />
+          <Logout handleLogout={handleLogout} />
         </div>
         <div className="main-content w-full h-full flex py-8 ">
           <div className="main-content-left flex-1 border-r-2 border-gray-200 px-4">
@@ -90,9 +102,17 @@ export const Dashboard = () => {
           <div className="main-content-right flex-5 w-full h-full flex px-4">
             <div className="flex flex-col w-full h-full items-start gap-3 flex-3">
               <h1 className="text-xl">Original Code:</h1>
-              <CodeBlock />
+              {selectedSnippet !== null ? (
+                <CodeBlock value={selectedSnippet.code} />
+              ) : (
+                <CodeBlock />
+              )}
               <h1 className="text-xl">Optimised Code:</h1>
-              <CodeBlock />
+              {selectedOptimisation !== null ? (
+                <CodeBlock value={selectedOptimisation.improved_code} />
+              ) : (
+                <CodeBlock />
+              )}
               <Button text="Optimise Code" />
             </div>
             <div className="info-container flex-2 mx-2 flex flex-col h-full gap-6 justify-start border-l-2 border-gray-200 px-4">
@@ -152,12 +172,17 @@ export const Dashboard = () => {
               {/* OPTIMISATION BLOCK */}
               <ContentBlock flex={"flex-3"}>
                 <div className="flex flex-col items-start h-full gap-2">
-                  <h1 className="text-2xl">Optimisation Notes:</h1>
+                  <h1 className="text-2xl">Optimisation Explanation:</h1>
                   <textarea
                     id="message"
                     rows={5}
                     className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
                     placeholder="Write your thoughts here..."
+                    value={
+                      selectedOptimisation !== null
+                        ? selectedOptimisation.explanation
+                        : ""
+                    }
                   ></textarea>
                 </div>
               </ContentBlock>
