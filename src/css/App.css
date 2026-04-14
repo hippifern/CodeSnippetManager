@@ -1,1 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Oswald", sans-serif;
+}
+
+p,
+a {
+  font-family: "Raleway", sans-serif;
+}

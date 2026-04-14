@@ -8,8 +8,20 @@ import { Logout } from "../components/Logout.tsx";
 import { Item } from "../components/Item.tsx";
 import { CodeBlock } from "../components/CodeBlock.tsx";
 import { ContentBlock } from "../components/ContentBlock.tsx";
+import { snippets, optimisations } from "../data/fakeData.ts";
 export const Dashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedSnippet, setSelectedSnippet] = useState<{
+    id: number;
+    user_id: number;
+    title: string;
+    language: string;
+    code: string;
+    tags: string[];
+    notes: string;
+    created_at: Date;
+    updated_at: Date;
+  } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,76 +44,119 @@ export const Dashboard = () => {
     }
   }
 
+  function selectSnippet(id) {
+    snippets.forEach((snip) => {
+      if (snip.id === id) {
+        setSelectedSnippet(snip);
+      }
+    });
+  }
+
+  console.log(selectedSnippet);
+
   // if (!currentUser) return <div>Loading...</div>;
 
   return (
     <div className="outer-container bg-emerald-300 h-screen w-screen p-8">
       <div className="inner-container bg-white h-full w-full rounded-2xl shadow-emerald-400 shadow-md flex p-8 flex-col">
-        <div className="upper-buttons border-b-2 border-gray-200 w-full h-12 flex justify-between ">
+        <div className="upper-buttons border-b-2 border-gray-200 w-full h-10 flex justify-between ">
           <Navbar />
-          <div className="rounded-2xl bg-emerald-300 h-fit px-8">
-            <p className="text-white">email@email.com</p>
-          </div>
           <Logout />
         </div>
         <div className="main-content w-full h-full flex py-8 ">
           <div className="main-content-left flex-1 border-r-2 border-gray-200 px-4">
-            <Button
-              text="Add New Byte"
-              svg={
-                <svg
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  className="w-4 h-4 ml-2"
-                >
-                  <path d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                </svg>
-              }
-            />
+            <Button text="Add New Byte" />
             <div className="items py-2 flex flex-col gap-2">
-              <Item />
-              <Item />
-              <Item />
-              <Item />
-              <Item />
+              {snippets.map((snip) => {
+                return (
+                  <Item
+                    title={snip.title}
+                    dateAdded={snip.created_at}
+                    selectSnippet={() => {
+                      selectSnippet(snip.id);
+                    }}
+                    selectedSnippetId={selectedSnippet.id}
+                    id={snip.id}
+                  />
+                );
+              })}
             </div>
           </div>
           <div className="main-content-right flex-5 w-full h-full flex px-4">
-            <CodeBlock />
-            <div className="info-container flex-1 mx-2 flex flex-col h-full gap-6 justify-start border-l-2 border-gray-200 px-4">
-              <ContentBlock>
-                <div className="flex justify-between items-center">
-                  <h1 className="text-2xl">The title of the snippet active</h1>
-                  <p>Language Tag</p>
-                </div>
-                <div>
-                  <div>
-                    <p>date created: 123911</p>
-                    <p>last updated: 129319</p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-6">
-                  <p>tag 1</p>
-                  <p>tag 2</p>
-                  <p>tag 3</p>
-                </div>
+            <div className="flex flex-col w-full h-full items-start gap-3 flex-3">
+              <h1>Original Code:</h1>
+              <CodeBlock />
+              <h1>Optimised Code:</h1>
+              <CodeBlock />
+              <Button text="Optimise Code" />
+            </div>
+            <div className="info-container flex-2 mx-2 flex flex-col h-full gap-6 justify-start border-l-2 border-gray-200 px-4">
+              {/* INFO BLOCK */}
+              <ContentBlock flex={"flex-1"}>
+                {selectedSnippet === null ? (
+                  <h1>No snippet selected</h1>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <h1 className="text-3xl">{selectedSnippet.title}</h1>
+                      <p className="px-3 rounded-2xl bg-emerald-300">
+                        {selectedSnippet.language}
+                      </p>
+                    </div>
+                    <div>
+                      <div>
+                        <p>
+                          date created: {selectedSnippet.created_at.getDay()}
+                          {"-"}
+                          {selectedSnippet.created_at.getMonth()}
+                          {"-"}
+                          {selectedSnippet.created_at.getFullYear()}
+                        </p>
+                        <p>
+                          last updated: {selectedSnippet.updated_at.getDay()}
+                          {"-"}
+                          {selectedSnippet.updated_at.getMonth()}
+                          {"-"}
+                          {selectedSnippet.updated_at.getFullYear()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      {selectedSnippet.tags.map((tag) => {
+                        return (
+                          <p className="text-sm px-3 rounded-2xl bg-emerald-100">
+                            {tag}
+                          </p>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </ContentBlock>
-              <ContentBlock flex={"flex-2"}>
-                <div className="flex">
-                  <h1>Snippet Notes:</h1>
-                </div>
+              {/* NOTE BLOCK */}
+              <ContentBlock flex={"flex-1"}>
+                <h1 className="text-2xl">Snippet Notes:</h1>
                 <textarea
                   id="message"
-                  rows={10}
+                  rows={5}
                   className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
                   placeholder="Write your thoughts here..."
                 ></textarea>
               </ContentBlock>
-              <div className="flex justify-around flex-2 items-end">
+              {/* OPTIMISATION BLOCK */}
+              <ContentBlock flex={"flex-3"}>
+                <div className="flex flex-col items-start h-full gap-2">
+                  <h1 className="text-2xl">Optimisation Notes:</h1>
+                  <textarea
+                    id="message"
+                    rows={5}
+                    className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
+                    placeholder="Write your thoughts here..."
+                  ></textarea>
+                </div>
+              </ContentBlock>
+              {/* BUTTON BLOCK */}
+              <div className="flex justify-around items-end h-fit">
                 <Button text="Delete" />
                 <Button text="Edit" />
                 <Button text="Save" />
