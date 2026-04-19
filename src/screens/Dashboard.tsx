@@ -1,14 +1,13 @@
 import { useNavigate } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Button } from "../components/Button.tsx";
 import { Navbar } from "../components/Navbar.tsx";
 import { Logout } from "../components/Logout.tsx";
 import { Item } from "../components/Item.tsx";
 import { CodeBlock } from "../components/CodeBlock.tsx";
 import { ContentBlock } from "../components/ContentBlock.tsx";
-import { snippets, optimisations } from "../data/fakeData.ts";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, DataSnapshot } from "firebase/database";
 import { auth, database } from "../firebase.tsx";
 
 type optimisationType = {
@@ -47,90 +46,17 @@ export const Dashboard = () => {
     snippets: snippetType[];
   }>(null);
   const navigate = useNavigate();
-  const collectionRef = ref(database, "data");
 
-  const fetchData = (ref) => {
-    let prevData = [];
-    onValue(ref, (snapshot) => {
-      const dataItem = snapshot.val();
-      if (dataItem) {
-        prevData = dataItem;
-        setData(dataItem);
-        setSelectedSnippet(dataItem.snippets[0]);
-      }
-    });
-    return prevData;
+  const fetchData = (snapshot: DataSnapshot) => {
+    const d = snapshot.val();
+    saveDataToState(d);
   };
 
-  const setUpData = (uid) => {
-    let data = {};
-    const setupSnipId = Math.round(Math.random() * 1000000);
-    data[uid] = {
-      snippets: [
-        {
-          id: setupSnipId,
-          user_id: uid,
-          title: "New Code Snippet",
-          language: "Not Set",
-          code: `Code not added yet`,
-          tags: [],
-          notes: "Notes not added yet",
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
-      optimisations: [
-        {
-          id: Math.round(Math.random() * 1000000),
-          snippet_id: setupSnipId,
-          improved_code: "No optimised code added yet",
-          explanation: "No optimisation made yet",
-          created_at: new Date(),
-        },
-      ],
-    };
-    update(collectionRef, data);
+  const saveDataToState = (d) => {
+    setData(d);
+    setSelectedSnippet(d.snippets[0]);
+    setSelectedOptimisation(d.optimisations[0]);
   };
-
-  const addNewSnippet = (uid) => {
-    const snippetsRef = ref(database, `data`);
-    const prevData = fetchData(snippetsRef);
-    const newData = [
-      ...prevData[0],
-      {
-        id: Math.random() * 100000,
-        user_id: uid,
-        title: "New Code Snippet",
-        language: "Not Set",
-        code: `Code not added yet`,
-        tags: ["new byte"],
-        notes: "Notes not added yet",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-    ];
-
-    update(snippetsRef, {
-      id: uid,
-      snippets: newData,
-    });
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
-        const userDataRef = ref(database, `data/${user.uid}`);
-        const d = fetchData(userDataRef);
-        if (d.length === 0) {
-          setUpData(user.uid);
-        }
-      } else {
-        navigate("/dashboard");
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate]);
 
   async function handleLogout() {
     try {
@@ -141,20 +67,78 @@ export const Dashboard = () => {
     }
   }
 
-  function selectSnippet(id) {
+  function selectSnippet(sid) {
     if (data !== null) {
       data.snippets.forEach((snip) => {
-        if (snip.id === id) {
+        if (snip.id === sid) {
           setSelectedSnippet(snip);
         }
       });
       data.optimsations.forEach((opti) => {
-        if (opti.snippet_id === id) {
+        if (opti.snippet_id === sid) {
           setSelectedOptimisation(opti);
         }
       });
     }
   }
+
+  const addNewSnippet = (uid) => {
+    const userDataRef = ref(database, `data/${uid}`);
+    if (data) {
+      data.snippets.push({
+        id: Math.floor(Math.random() * 100000),
+        user_id: uid,
+        title: "New Code Snippet",
+        language: "Not Set",
+        code: `Code not added yet`,
+        tags: ["new byte"],
+        notes: "Notes not added yet",
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      update(userDataRef, data);
+    }
+  };
+
+  const deleteSelectedSnippet = (sid) => {
+    const userDataRef = ref(database, `data/${currentUser.uid}`);
+    if (data !== null) {
+      const selectedId = data.snippets.findIndex((snip) => {
+        return (snip.id = sid);
+      });
+      data.snippets.splice(selectedId, 1);
+      update(userDataRef, data);
+    }
+  };
+
+  const updateSelectedSnippet = (sid, keyToChange, valueToChange) => {
+    const userDataRef = ref(database, `data/${currentUser.uid}`);
+    if (data !== null) {
+      if (keyToChange === "tags") {
+        const tags = valueToChange.replaceAll(", ", ",").split(",");
+        selectedSnippet[keyToChange] = tags;
+      } else {
+        selectedSnippet[keyToChange] = valueToChange;
+      }
+      const selectedId = data.snippets.findIndex((snip) => {
+        return (snip.id = sid);
+      });
+      data.snippets[selectedId] = selectedSnippet;
+      update(userDataRef, data);
+    }
+  };
+
+  useLayoutEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        const userDataRef = ref(database, `data/${user.uid}`);
+        onValue(userDataRef, fetchData);
+      } else {
+        navigate("/dashboard");
+      }
+    });
+  }, [navigate]);
 
   if (!currentUser && !data)
     return (
@@ -204,18 +188,30 @@ export const Dashboard = () => {
           <div className="main-content-right flex-5 w-full h-full flex px-4">
             <div className="flex flex-col w-full h-full items-start gap-3 flex-3">
               <h1 className="text-xl">Original Code:</h1>
-              {selectedSnippet !== null ? (
-                <CodeBlock value={selectedSnippet.code} />
-              ) : (
-                <CodeBlock />
-              )}
+              <CodeBlock
+                value={selectedSnippet ? selectedSnippet.code : ""}
+                updateSelectedSnippet={updateSelectedSnippet}
+                keyToChange={"code"}
+                sid={selectedSnippet ? selectedSnippet.id : -1}
+              />
               <h1 className="text-xl">Optimised Code:</h1>
-              {selectedOptimisation !== null ? (
-                <CodeBlock value={selectedOptimisation.improved_code} />
-              ) : (
-                <CodeBlock />
-              )}
-              <Button text="Optimise Code" />
+              <CodeBlock
+                value={
+                  selectedOptimisation ? selectedOptimisation.improved_code : ""
+                }
+                updateSelectedSnippet={updateSelectedSnippet}
+                keyToChange={"code"}
+                sid={selectedOptimisation ? selectedOptimisation.id : -1}
+              />
+              <div className="flex w-full justify-between">
+                {" "}
+                <Button text="Optimise Code" onClick={() => {}} />
+                <Button
+                  text="Delete Snippet"
+                  color="text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-black"
+                  onClick={() => deleteSelectedSnippet(selectedSnippet.id)}
+                />
+              </div>
             </div>
             <div className="info-container flex-2 mx-2 flex flex-col h-full gap-6 justify-start border-l-2 border-gray-200 px-4">
               {/* INFO BLOCK */}
@@ -234,7 +230,7 @@ export const Dashboard = () => {
                       <div>
                         <p className="text-gray-500">
                           date created:{" "}
-                          {new Date(selectedSnippet.created_at).getDay()}
+                          {new Date(selectedSnippet.created_at).getDate()}
                           {"-"}
                           {new Date(selectedSnippet.created_at).getMonth()}
                           {"-"}
@@ -242,7 +238,7 @@ export const Dashboard = () => {
                         </p>
                         <p className="text-gray-500">
                           last updated:{" "}
-                          {new Date(selectedSnippet.updated_at).getDay()}
+                          {new Date(selectedSnippet.updated_at).getDate()}
                           {"-"}
                           {new Date(selectedSnippet.updated_at).getMonth()}
                           {"-"}
@@ -271,7 +267,14 @@ export const Dashboard = () => {
                   rows={5}
                   className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
                   placeholder="Write your thoughts here..."
-                  value={selectedSnippet !== null ? selectedSnippet.notes : ""}
+                  value={selectedSnippet ? selectedSnippet.notes : ""}
+                  onChange={(e) => {
+                    updateSelectedSnippet(
+                      selectedSnippet.id,
+                      "notes",
+                      e.target.value,
+                    );
+                  }}
                 ></textarea>
               </ContentBlock>
               {/* OPTIMISATION BLOCK */}
@@ -284,32 +287,63 @@ export const Dashboard = () => {
                     className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full p-3.5 shadow-xs placeholder:text-body"
                     placeholder="Write your thoughts here..."
                     value={
-                      selectedOptimisation !== null
+                      selectedOptimisation
                         ? selectedOptimisation.explanation
                         : ""
                     }
+                    readOnly
                   ></textarea>
                 </div>
               </ContentBlock>
               <ContentBlock flex={"flex-3 flex-col gap-6"}>
                 <div className="flex justify-between">
-                  <h2>Add Tag:</h2>
-                  <input type="text" name="" id="" />
+                  <h2>Change Title:</h2>
+                  <input
+                    type="text"
+                    name=""
+                    id=""
+                    onChange={(e) => {
+                      updateSelectedSnippet(
+                        selectedSnippet.id,
+                        "title",
+                        e.target.value,
+                      );
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between">
+                  <h2>Add Tag (comma seperated list):</h2>
+                  <input
+                    type="text"
+                    name=""
+                    id=""
+                    onChange={(e) => {
+                      updateSelectedSnippet(
+                        selectedSnippet.id,
+                        "tags",
+                        e.target.value,
+                      );
+                    }}
+                  />
                 </div>
                 <div className="flex justify-between">
                   <h2>Change Language:</h2>
-                  <input type="text" name="" id="" />
+                  <input
+                    type="text"
+                    name=""
+                    id=""
+                    onChange={(e) => {
+                      updateSelectedSnippet(
+                        selectedSnippet.id,
+                        "language",
+                        e.target.value,
+                      );
+                    }}
+                  />
                 </div>
               </ContentBlock>
               {/* BUTTON BLOCK */}
-              <div className="flex justify-around items-end h-fit">
-                <Button
-                  text="Delete"
-                  color="text-orange-500 border-orange-500 hover:bg-orange-500 hover:text-black"
-                />
-                <Button text="Edit" />
-                <Button text="Save" />
-              </div>
+              <div className="flex justify-around items-end h-fit"></div>
             </div>
           </div>
         </div>

@@ -21,7 +21,7 @@ export const Item = ({
       <div className={`text-content border-l-3 border-emerald-300 px-1`}>
         <h2 className="text-md">{title}</h2>
         <p className="text-sm text-gray-500">
-          date created: {dateAdded.getDay()}
+          date created: {dateAdded.getDate()}
           {"-"}
           {dateAdded.getMonth()}
           {"-"}
