@@ -9,7 +9,7 @@ export const Item = ({
   selectSnippet: () => void;
   title: string;
   dateAdded: Date;
-  language: string;
+  language;
   selectedSnippetId: number;
   id: number;
 }) => {
