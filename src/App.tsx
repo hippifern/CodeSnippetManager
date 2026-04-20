@@ -11,15 +11,14 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        {/* <Route
+        <Route
           path="/dashboard"
           element={
             <AuthCheck>
               <Dashboard />
             </AuthCheck>
           }
-        /> */}
-        <Route path="/dashboard" element={<Dashboard />} />
+        />
       </Routes>
     </BrowserRouter>
   );
