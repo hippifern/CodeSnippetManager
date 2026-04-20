@@ -1,4 +1,6 @@
-export const Navbar = ({ currentUser }) => {
+import type { User } from "firebase/auth";
+
+export const Navbar = ({ currentUser }: { currentUser: User }) => {
   return (
     <nav aria-label="breadcrumb">
       <ul className="flex flex-wrap space-x-3 text-sm font-medium">

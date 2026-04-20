@@ -1,7 +1,7 @@
 import { useState } from "react";
 import logo from "../assets/logo.svg";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { auth } from "../firebase.tsx";
 
 export const Signup = () => {
@@ -12,7 +12,7 @@ export const Signup = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  async function handleSignupSubmit(e) {
+  async function handleSignupSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -25,7 +25,8 @@ export const Signup = () => {
       await createUserWithEmailAndPassword(auth, email, password);
       navigate("/dashboard");
     } catch (err) {
-      setError("Failed to create an account: " + err.message);
+      setError("Failed to create an account: " + err);
+      console.log(error);
     }
 
     setLoading(false);
