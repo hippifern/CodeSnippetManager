@@ -1,9 +1,9 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase.tsx";
 import { Navigate } from "react-router";
 
-function AuthCheck({ children }: { children: ReactNode }) {
+function AuthCheck({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
