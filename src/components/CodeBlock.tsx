@@ -1,11 +1,22 @@
 import CodeMirror, { oneDark } from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 
+type EditableFields = "title" | "language" | "code" | "notes" | "tags";
+
 export const CodeBlock = ({
   value = "console.log('Hello World');",
   updateSelectedSnippet,
   keyToChange,
   sid,
+}: {
+  value: string;
+  updateSelectedSnippet: (
+    sid: number,
+    keyToChange: EditableFields,
+    val: string,
+  ) => void;
+  keyToChange: EditableFields;
+  sid: number;
 }) => {
   return (
     <div className="code-block h-full w-full flex-1 bg-gray-800 rounded-2xl p-2 shadow-black shadow-sm">

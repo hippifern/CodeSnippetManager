@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import { Login } from "./screens/Login";
 import { Signup } from "./screens/Signup";
 import { Dashboard } from "./screens/Dashboard";
-import AuthCheck from "./components/authCheck";
 
 function App() {
   return (

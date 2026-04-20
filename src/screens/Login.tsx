@@ -1,5 +1,5 @@
 import logo from "../assets/logo.svg";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { auth } from "../firebase.tsx";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
@@ -11,7 +11,7 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  async function handleLoginSubmit(e) {
+  async function handleLoginSubmit(e: any) {
     e.preventDefault();
 
     try {
@@ -19,8 +19,9 @@ export const Login = () => {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       setError("Failed to log in: " + err.message);
+      console.log(error);
     }
 
     setLoading(false);
